@@ -38,7 +38,7 @@
 #
 # === Examples
 #
-#  core::download {"http://download.site.com/file-1.1.1.tar.bz2":
+#  prefetch::download {"http://download.site.com/file-1.1.1.tar.bz2":
 #    target_dir => '/tmp',
 #    owner      => root,
 #    group      => wheel,
@@ -66,4 +66,115 @@ define prefetch::download(
   validate_re($ensure, ['^(present|absent)$'])
 
   debug "Download[${name}]: source=${source}, target_dir=${target_dir}"
+  $filename = url_parse($source, 'filename')
+
+  if (! defined(File[$target_dir]))
+  {
+    file {$target_dir:
+      ensure => directory,
+      mode   => $mode,
+    }
+  }
+
+  case ($ensure)
+  {
+    present:
+    {
+      case $::operatingsystem
+      {
+        'Windows':
+        {
+          exec {"download-${filename}":
+            command  => "((new-object net.webclient).DownloadFile('${source}','${target_dir}/${filename}'))",
+            creates  => "${target_dir}/${filename}",
+            timeout  => $timeout,
+            provider => powershell,
+            require  => File[$target_dir],
+          }
+
+          # owner cannot be easily set on Windows
+        }
+        'Darwin':
+        {
+          # curl is always installed on Mac OS/X
+          $curl_bin  = '/usr/bin/curl'
+          $curl_args = '--silent --show-error --fail --insecure --location'
+          exec {"download-${filename}":
+            command => "${curl_bin} ${curl_args} --output \"${target_dir}/${filename}\" \"${source}\"",
+            creates => "${target_dir}/${filename}",
+            timeout => $timeout,
+            require => File[$target_dir],
+          }
+
+          if ($owner != undef)
+          {
+            exec {"chown-${filename}":
+              command => "/usr/sbin/chown ${owner}:${group} \"${target_dir}/${filename}\"",
+              unless  => "/bin/test `/usr/bin/stat -f %Su '${target_dir}/${filename}'` = \"${owner}\" ",
+              timeout => $timeout,
+              require => Exec["download-${filename}"],
+            }
+          }
+
+          if ($mode != undef)
+          {
+            exec {"chmod-${filename}":
+              command => "/bin/chmod ${mode} \"${target_dir}/${filename}\"",
+              unless  => "/bin/test \"0`/usr/bin/stat -f %OLp '${target_dir}/${filename}'`\" = \"${mode}\" ",
+              timeout => $timeout,
+              require => Exec["download-${filename}"],
+            }
+          }
+        }
+        'Linux':
+        {
+          # TODO: We should check curl is installed!
+          $curl_bin  = '/usr/bin/curl'
+          $curl_args = '--silent --show-error --fail --insecure --location'
+          exec {"download-${filename}":
+            command => "${curl_bin} ${curl_args} --output \"${target_dir}/${filename}\" \"${source}\"",
+            creates => "${target_dir}/${filename}",
+            timeout => $timeout,
+            require => File[$target_dir],
+          }
+
+          if ($owner != undef)
+          {
+            exec {"chown-${filename}":
+              command => "/bin/chown ${owner}:${group} \"${target_dir}/${filename}\"",
+              unless  => "/usr/bin/test `/usr/bin/stat -C %U '${target_dir}/${filename}'` = \"${owner}\" ",
+              timeout => $timeout,
+              require => Exec["download-${filename}"],
+            }
+          }
+          if ($mode != undef)
+          {
+            exec {"chmod-${filename}":
+              command => "/bin/chmod ${mode} \"${target_dir}/${filename}\"",
+              unless  => "/usr/bin/test \"0`/usr/bin/stat -c %a '${target_dir}/${filename}'`\" = \"${mode}\" ",
+              timeout => $timeout,
+              require => Exec["download-${filename}"],
+            }
+          }
+        }
+        default: { fail("Unsupported Operating System value: \"${::operatingsystem}\"") }
+      }
+    }
+    absent:
+    {
+      file {"remove-${filename}.md5":
+        ensure => absent,
+        path   => "${target_dir}/${filename}.md5",
+        purge  => true,
+        force  => true,
+      }
+      file {"remove-${filename}":
+        ensure => absent,
+        path   => "${target_dir}/${filename}",
+        purge  => true,
+        force  => true,
+      }
+    }
+    default: { fail("Unsupported ensure value: \"${ensure}\"") }
+  }
 }

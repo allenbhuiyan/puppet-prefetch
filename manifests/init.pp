@@ -1,6 +1,6 @@
 # == Class: prefetch
 #
-# Full description of class prefetch here.
+# Prefetches document from various sources on the local machine.
 #
 # === Parameters
 #
@@ -35,7 +35,35 @@
 #
 # Copyright 2014 Your name here, unless otherwise noted.
 #
-class prefetch {
+class prefetch(
+  $home_dir = $prefetch::params::home_dir,
+  $owner    = $prefetch::params::owner,
+  $group    = $prefetch::params::group,
+) inherits prefetch::params
+{
+  if (!defined(File[$home_dir]))
+  {
+    file {$home_dir:
+      ensure => directory,
+      owner  => $owner,
+      group  => $group,
+      mode   => '0775',
+    }
+  }
 
+  $prefetches = hiera('prefetches', {})
+
+  if (! empty($prefetches))
+  {
+    $prefetch_defaults = {
+      ensure     => present,
+      target_dir => $home_dir,
+      owner      => $owner,
+      group      => $group,
+      mode       => '0644',
+      timeout    => 900,
+    }
+    create_resources(prefetch::download, $prefetches, $prefetch_defaults)
+  }
 
 }

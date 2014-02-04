@@ -46,13 +46,13 @@
 #
 # === Authors
 #
-# Gildas CHERRUEL <gildas.cherruel@inin.com>
+# Gildas CHERRUEL <gildas@breizh.org>
 #
 # === Copyright
 #
-# Copyright 1993-2014 (c) Interactive Intelligence, Inc.
+# Copyright 2014 (c) Gildas Cherruel
 #
-define core::download(
+define prefetch::download(
   $source     = $name,
   $ensure     = present,
   $target_dir = $core::cache_dir,

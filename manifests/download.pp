@@ -63,6 +63,12 @@ define prefetch::download(
   $timeout    = 300,
 )
 {
+    # TODO: 
+    # Support several sources, like:
+    # source => [ "first URL", "Second URL" ],
+    # First is tried first and if it fails, Second is used.
+    # That way we could have a closer server for the file, and a backup at Microsoft.
+    # To download 2008R2 from Microsoft took 4 hours...
   validate_re($ensure, ['^(present|absent)$'])
 
   debug "Download[${name}]: source=${source}, target_dir=${target_dir}"

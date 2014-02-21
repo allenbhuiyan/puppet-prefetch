@@ -16,9 +16,9 @@ class prefetch::params
     }
     'Darwin':
     {
-      $home_dir = '/var/lib/puppet/cache'
+      $home_dir = '/Users/Shared/Downloads'
       $owner    = 'puppet'
-      $group    = 'puppet'
+      $group    = 'staff'
     }
     default: { fail ("Unsupported kernel: ${::kernel}") }
   }

@@ -71,6 +71,12 @@ define prefetch::download(
     # To download 2008R2 from Microsoft took 4 hours...
   validate_re($ensure, ['^(present|absent)$'])
 
+  if ($::operatingsystem == 'Windows')
+  {
+    # We do not want to copy Unix modes to Windows, it tends to render files unaccessible
+    File { source_permissions => ignore }
+  }
+
   debug "Download[${name}]: source=${source}, target_dir=${target_dir}"
   $filename = url_parse($source, 'filename')
 

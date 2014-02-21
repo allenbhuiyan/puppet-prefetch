@@ -41,6 +41,12 @@ class prefetch(
   $group    = $prefetch::params::group,
 ) inherits prefetch::params
 {
+  if ($::operatingsystem == 'Windows')
+  {
+    # We do not want to copy Unix modes to Windows, it tends to render files unaccessible
+    File { source_permissions => ignore }
+  }
+
   if (!defined(File[$home_dir]))
   {
     file {$home_dir:

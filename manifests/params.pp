@@ -11,7 +11,7 @@ class prefetch::params
     'Windows':
     {
       $home_dir = 'C:/ProgramData/PuppetLabs/puppet/var/cache'
-      $owner    = 'puppet'
+      $owner    = undef
       $group    = undef
     }
     'Darwin':

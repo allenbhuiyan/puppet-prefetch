@@ -57,7 +57,7 @@ class prefetch(
     }
   }
 
-  $prefetches = hiera('prefetches', {})
+  $prefetches = hiera_hash('prefetches', {})
 
   if (! empty($prefetches))
   {

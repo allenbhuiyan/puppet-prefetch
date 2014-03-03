@@ -49,11 +49,23 @@ class prefetch(
 
   if (!defined(File[$home_dir]))
   {
-    file {$home_dir:
-      ensure => directory,
-      owner  => $owner,
-      group  => $group,
-      mode   => '0775',
+    case $::operatingsystem
+    {
+      'windows':
+      {
+        file {$home_dir:
+          ensure => directory,
+        }
+      }
+      default:
+      {
+        file {$home_dir:
+          ensure => directory,
+          owner  => $owner,
+          group  => $group,
+          mode   => '0775',
+        }
+      }
     }
   }
 

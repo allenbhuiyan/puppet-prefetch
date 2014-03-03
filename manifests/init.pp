@@ -73,13 +73,27 @@ class prefetch(
 
   if (! empty($prefetches))
   {
-    $prefetch_defaults = {
-      ensure     => present,
-      target_dir => $home_dir,
-      owner      => $owner,
-      group      => $group,
-      mode       => '0644',
-      timeout    => 900,
+    case $::operatingsystem
+    {
+      'windows':
+      {
+        $prefetch_defaults = {
+          ensure     => present,
+          target_dir => $home_dir,
+          timeout    => 900,
+        }
+      }
+      default:
+      {
+        $prefetch_defaults = {
+          ensure     => present,
+          target_dir => $home_dir,
+          owner      => $owner,
+          group      => $group,
+          mode       => '0644',
+          timeout    => 900,
+        }
+      }
     }
     create_resources(prefetch::download, $prefetches, $prefetch_defaults)
   }
